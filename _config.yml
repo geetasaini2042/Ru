@@ -1,0 +1,37 @@
+title: "SingodiyaTech"
+description: "टेक्नोलॉजी, कोडिंग और डिजिटल नॉलेज — हिंदी में"
+author: "Pankaj Saini"
+email: your-email@example.com
+baseurl: "" # अगर repo name के साथ host कर रहे हो तो लिखो: /repo-name
+url: "https://pankajsaini.github.io" # बिना slash के end में
+
+# Build settings
+markdown: kramdown
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Permalinks format for blog posts
+permalink: /:year/:month/:day/:title/
+
+# Collections
+collections:
+  posts:
+    output: true
+
+# Exclude these from the build
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# GitHub repository info (optional - हटाओ तो "Improve this page" नहीं दिखेगा)
+# github:
+#   repository_url: https://github.com/pankajsaini/SingodiyaTech
+
+# Feed options
+feed:
+  path: feed.xml
