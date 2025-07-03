@@ -1,21 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DearFlip Flipbook (GitHub Pages)</title>
-  <link rel="stylesheet" href="https://dearhive.github.io/dearflip-js-flipbook/dflip/css/dflip.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chemistry Syllabus Flipbook</title>
+  <!-- DearFlip CSS from GitHub Pages -->
+  <link rel="stylesheet" href="https://dearhive.github.io/dearflip-js-flipbook/dflip/css/dflip.min.css" />
+  <style>
+    /* flipbook ko screen me bada dikhane ke liye */
+    #myBook {
+      width: 100%;
+      height: 90vh;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Flipbook container -->
   <div class="_df_book" id="myBook" source="https://storied-babka-0753af.netlify.app/Bsc/Math_group/Syllabus/Chemistry.pdf"></div>
 
+  <!-- jQuery dependency -->
   <script src="https://dearhive.github.io/dearflip-js-flipbook/dflip/js/libs/jquery.min.js"></script>
+  <!-- DearFlip JS -->
   <script src="https://dearhive.github.io/dearflip-js-flipbook/dflip/js/dflip.min.js"></script>
+
   <script>
     var option_myBook = {
-      height: "80%",
+      height: "90vh",
       webgl: true,
       showDownloadControl: true
     };
   </script>
+
 </body>
 </html>
