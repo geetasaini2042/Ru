@@ -2,112 +2,140 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Reply to Feedback</title>
+  <title>Admin Reply</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
       background: #121212;
       color: #fff;
-      padding: 20px;
     }
 
-    h1 {
+    h2 {
       text-align: center;
       color: #00e676;
     }
 
-    .reply-box {
-      margin-top: 20px;
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
       background: #1e1e1e;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0, 255, 100, 0.3);
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
     }
 
     textarea {
       width: 100%;
-      height: 120px;
-      font-size: 16px;
+      min-height: 100px;
       padding: 10px;
       border-radius: 8px;
       border: none;
-      resize: none;
-      background: #2a2a2a;
+      background: #2c2c2c;
       color: #fff;
-      margin-top: 10px;
+      font-size: 14px;
+      resize: vertical;
     }
 
-    .submit-btn {
+    button {
       margin-top: 15px;
       padding: 10px 20px;
       background: #00e676;
-      border: none;
-      font-weight: bold;
       color: #000;
-      border-radius: 6px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
 
-    .submit-btn:hover {
+    button:hover {
       background: #00c853;
     }
 
-    .existing-reply {
-      background: #2c2c2c;
+    .current-reply {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #ccc;
+      background: #2a2a2a;
       padding: 10px;
       border-left: 4px solid #2196f3;
       border-radius: 6px;
-      margin-bottom: 10px;
     }
 
     .status {
       margin-top: 10px;
+      font-size: 14px;
+      color: #ffeb3b;
+    }
+
+    .back-button {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: #333;
       color: #00e676;
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-button:hover {
+      background: #444;
     }
   </style>
 </head>
 <body>
 
-  <h1>📝 Admin Reply</h1>
+  <div class="container">
+    <a class="back-button" href="rate_overview.html">← Back</a>
+    <h2>Reply to Feedback</h2>
+    <div id="currentReply" class="current-reply">Loading current reply...</div>
 
-  <div class="reply-box">
-    <div id="existingReply" class="existing-reply" style="display:none;"></div>
-    <textarea id="replyInput" placeholder="Type your reply here..."></textarea>
-    <button class="submit-btn" onclick="submitReply()">Submit Reply</button>
-    <div id="status" class="status"></div>
+    <label for="reply">Your Reply:</label>
+    <textarea id="reply" placeholder="Write your response here..."></textarea>
+
+    <button onclick="submitReply()">💬 Submit Reply</button>
+    <div class="status" id="status"></div>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("id");
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
 
-    const replyInput = document.getElementById("replyInput");
-    const existingReply = document.getElementById("existingReply");
-    const statusDiv = document.getElementById("status");
+    const replyBox = document.getElementById("reply");
+    const statusBox = document.getElementById("status");
+    const currentReplyDiv = document.getElementById("currentReply");
 
     if (!userId) {
-      alert("User ID missing in URL.");
+      statusBox.textContent = "❌ No user ID provided.";
     } else {
-      // ✅ Load existing reply using get_me.php
       fetch(`https://sainipankaj12.serv00.net/Feedback/get_me.php?user_id=${userId}`)
         .then(res => res.json())
         .then(data => {
-          if (data?.admin_reply) {
-            existingReply.textContent = "Current Reply: " + data.admin_reply;
-            existingReply.style.display = "block";
-            replyInput.value = data.admin_reply;
+          if (data.admin_reply) {
+            currentReplyDiv.textContent = `Current Reply: ${data.admin_reply}`;
+          } else {
+            currentReplyDiv.textContent = `No reply has been added yet.`;
           }
         })
-        .catch(err => {
-          console.error("Failed to load current reply", err);
+        .catch(() => {
+          currentReplyDiv.textContent = "⚠️ Failed to load current reply.";
         });
     }
 
     function submitReply() {
-      const replyText = replyInput.value.trim();
-      if (!replyText) {
-        alert("Reply cannot be empty.");
+      const reply = replyBox.value.trim();
+      if (!reply) {
+        statusBox.textContent = "❌ Please write a reply before submitting.";
         return;
       }
 
@@ -118,22 +146,20 @@
         },
         body: JSON.stringify({
           user_id: userId,
-          admin_reply: replyText
+          reply: reply
         })
       })
       .then(res => res.json())
-      .then(result => {
-        if (result.success) {
-          statusDiv.textContent = "✅ Reply saved successfully!";
-          existingReply.textContent = "Current Reply: " + replyText;
-          existingReply.style.display = "block";
+      .then(data => {
+        if (data.success) {
+          statusBox.textContent = "✅ Reply saved successfully!";
+          currentReplyDiv.textContent = `Current Reply: ${reply}`;
         } else {
-          statusDiv.textContent = "❌ Failed to save reply: " + result.message;
+          statusBox.textContent = "❌ " + (data.error || "Failed to save reply.");
         }
       })
-      .catch(err => {
-        statusDiv.textContent = "❌ Error occurred while saving reply.";
-        console.error(err);
+      .catch(() => {
+        statusBox.textContent = "❌ Network error.";
       });
     }
   </script>
