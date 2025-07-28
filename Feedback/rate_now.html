@@ -24,13 +24,7 @@
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.ready();
-    const tg = window.Telegram.WebApp;
     const userId = tg.initDataUnsafe?.user?.id;
-
-    const user = tg.initDataUnsafe?.user;
-    const userId = user?.id;
-
     if (!userId) {
       document.body.innerHTML = "❌ Unable to fetch Telegram user ID.";
     } else {
