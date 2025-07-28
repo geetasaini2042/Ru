@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Feedback Overview</title>
+  <title>Feedback Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -73,6 +73,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       transition: transform 0.2s ease;
+      position: relative;
     }
 
     .rating-card:hover {
@@ -112,11 +113,28 @@
       text-align: right;
     }
 
-    .loading {
+    .reply-btn {
+      margin-top: 10px;
+      padding: 6px 14px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      float: right;
+      transition: background 0.3s ease;
+    }
+
+    .reply-btn:hover {
+      background: #1976d2;
+    }
+
+    .loading, .end-message {
       text-align: center;
-      font-size: 18px;
-      color: #ccc;
-      margin-top: 40px;
+      font-size: 16px;
+      color: #aaa;
+      margin: 20px 0;
     }
 
     @media (max-width: 500px) {
@@ -139,11 +157,26 @@
 
   <button class="rate-button" onclick="location.href='rate_now.html'">⭐ Rate Now</button>
 
-  <div id="cardWrapper" class="card-container">
-    <div class="loading" id="loadingText">⏳ Please wait...</div>
-  </div>
+  <div id="cardWrapper" class="card-container"></div>
+  <div id="loading" class="loading">⏳ Please wait...</div>
+  <div id="endMessage" class="end-message" style="display:none;">✅ No more feedback to show.</div>
 
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    const userId = tg.initDataUnsafe?.user?.id;
+    const isAdmin = userId == 6150091802;
+
+    let page = 1;
+    let loading = false;
+    let allLoaded = false;
+    let totalRating = 0;
+    let totalCount = 0;
+
+    const wrapper = document.getElementById("cardWrapper");
+    const loadingDiv = document.getElementById("loading");
+    const endMessage = document.getElementById("endMessage");
+
     function getStarsHTML(rating) {
       const max = 5;
       const filled = "★".repeat(Math.round(rating));
@@ -151,57 +184,70 @@
       return filled + empty;
     }
 
-    function setAverageRating(avg) {
+    function setAverageRating() {
+      if (totalCount === 0) return;
+      const avg = totalRating / totalCount;
       const starPercentage = (avg / 5) * 100;
       document.getElementById('starsInner').style.width = `${starPercentage}%`;
       document.getElementById('averageText').textContent = `Average Rating: ${avg.toFixed(2)} / 5`;
     }
 
-    fetch("https://sainipankaj12.serv00.net/Feedback/get_ratings.php")
-      .then(response => response.json())
-      .then(data => {
-        const wrapper = document.getElementById("cardWrapper");
-        wrapper.innerHTML = "";
+    function loadRatings() {
+      if (loading || allLoaded) return;
+      loading = true;
+      loadingDiv.style.display = "block";
 
-        if (data.length === 0) {
-          wrapper.innerHTML = "<div class='loading'>No feedback found.</div>";
-          return;
-        }
+      fetch(`https://sainipankaj12.serv00.net/Feedback/get_ratings.php?page=${page}`)
+        .then(res => res.json())
+        .then(data => {
+          loading = false;
+          loadingDiv.style.display = "none";
 
-        // Sort by latest timestamp descending
-        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          if (data.length === 0) {
+            allLoaded = true;
+            endMessage.style.display = "block";
+            return;
+          }
 
-        let total = 0;
-        data.forEach(entry => {
-          const rating = parseFloat(entry.rating);
-          total += rating;
+          data.forEach(entry => {
+            const rating = parseFloat(entry.rating);
+            totalRating += rating;
+            totalCount++;
 
-          const userName = entry.user_name?.trim() || "Unknown User";
-          const feedback = entry.feedback?.trim() || "<i>No Message</i>";
-          const adminReply = entry.admin_reply?.trim();
+            const userName = entry.user_name?.trim() || "Unknown User";
+            const feedback = entry.feedback?.trim() || "<i>No Message</i>";
+            const adminReply = entry.admin_reply?.trim();
 
-          const card = document.createElement("div");
-          card.className = "rating-card";
-          card.innerHTML = `
-            <h3>${userName}</h3>
-            <div class="stars">${getStarsHTML(rating)}</div>
-            <div class="feedback">${feedback}</div>
-            ${adminReply ? `<div class="admin-reply"><strong>Reply:</strong> ${adminReply}</div>` : ""}
-            <div class="timestamp">${entry.timestamp}</div>
-          `;
-          wrapper.appendChild(card);
+            const card = document.createElement("div");
+            card.className = "rating-card";
+            card.innerHTML = `
+              <h3>${userName}</h3>
+              <div class="stars">${getStarsHTML(rating)}</div>
+              <div class="feedback">${feedback}</div>
+              ${adminReply ? `<div class="admin-reply"><strong>Reply:</strong> ${adminReply}</div>` : ""}
+              <div class="timestamp">${entry.timestamp}</div>
+              ${isAdmin ? `<button class="reply-btn" onclick="location.href='reply.html?id=${entry.user_id}'">✍️ Reply</button>` : ""}
+            `;
+            wrapper.appendChild(card);
+          });
+
+          setAverageRating();
+          page++;
+        })
+        .catch(err => {
+          console.error("Error:", err);
+          loading = false;
+          loadingDiv.innerHTML = "❌ Failed to load data.";
         });
+    }
 
-        const average = total / data.length;
-        setAverageRating(average);
-      })
-      .catch(err => {
-        console.error("Error loading ratings:", err);
-        document.getElementById("cardWrapper").innerHTML = `
-          <div class='loading'>❌ Failed to load data.</div>
-        `;
-      });
+    loadRatings();
+
+    window.addEventListener("scroll", () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+        loadRatings();
+      }
+    });
   </script>
-
 </body>
 </html>
