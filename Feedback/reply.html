@@ -2,109 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Reply</title>
+  <title>Reply to Feedback</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #0f0f0f;
+      background: #121212;
       color: #fff;
       padding: 20px;
     }
 
-    h2 {
+    h1 {
       text-align: center;
       color: #00e676;
-      margin-bottom: 30px;
     }
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
+    .reply-box {
+      margin-top: 20px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0, 255, 100, 0.3);
     }
 
     textarea {
       width: 100%;
       height: 120px;
+      font-size: 16px;
       padding: 10px;
+      border-radius: 8px;
       border: none;
-      border-radius: 10px;
-      resize: vertical;
-      font-size: 16px;
+      resize: none;
+      background: #2a2a2a;
+      color: #fff;
+      margin-top: 10px;
     }
 
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background-color: #00e676;
-      color: black;
+    .submit-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #00e676;
       border: none;
-      border-radius: 25px;
-      cursor: pointer;
       font-weight: bold;
+      color: #000;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
-    button:hover {
-      background-color: #00c853;
+    .submit-btn:hover {
+      background: #00c853;
     }
 
-    .message {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 14px;
-      color: #ccc;
+    .existing-reply {
+      background: #2c2c2c;
+      padding: 10px;
+      border-left: 4px solid #2196f3;
+      border-radius: 6px;
+      margin-bottom: 10px;
     }
 
-    .error {
-      color: red;
-    }
-
-    .success {
+    .status {
+      margin-top: 10px;
       color: #00e676;
     }
   </style>
 </head>
 <body>
-  <h2>📝 Admin Reply</h2>
 
-  <div>
-    <label for="reply">Enter your reply:</label>
-    <textarea id="reply" placeholder="Type your reply here..."></textarea>
-    <button onclick="submitReply()">Submit Reply</button>
-    <div id="msg" class="message"></div>
+  <h1>📝 Admin Reply</h1>
+
+  <div class="reply-box">
+    <div id="existingReply" class="existing-reply" style="display:none;"></div>
+    <textarea id="replyInput" placeholder="Type your reply here..."></textarea>
+    <button class="submit-btn" onclick="submitReply()">Submit Reply</button>
+    <div id="status" class="status"></div>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("id");
 
-    const adminId = tg.initDataUnsafe?.user?.id;
-    const replyToUserId = new URLSearchParams(window.location.search).get("id");
-    const msgDiv = document.getElementById("msg");
+    const replyInput = document.getElementById("replyInput");
+    const existingReply = document.getElementById("existingReply");
+    const statusDiv = document.getElementById("status");
+
+    if (!userId) {
+      alert("User ID missing in URL.");
+    } else {
+      // Load existing reply
+      fetch(`https://sainipankaj12.serv00.net/Feedback/get_ratings.php`)
+        .then(res => res.json())
+        .then(data => {
+          const entry = data.find(e => e.user_id === userId);
+          if (entry?.admin_reply) {
+            existingReply.textContent = "Current Reply: " + entry.admin_reply;
+            existingReply.style.display = "block";
+            replyInput.value = entry.admin_reply;
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load existing reply", err);
+        });
+    }
 
     function submitReply() {
-      const reply = document.getElementById("reply").value.trim();
-      msgDiv.textContent = "";
-
-      if (adminId != 6150091802) {
-        msgDiv.textContent = "❌ Unauthorized access.";
-        msgDiv.className = "message error";
-        return;
-      }
-
-      if (!replyToUserId) {
-        msgDiv.textContent = "❌ Missing user ID in URL.";
-        msgDiv.className = "message error";
-        return;
-      }
-
-      if (reply === "") {
-        msgDiv.textContent = "❌ Please enter a reply.";
-        msgDiv.className = "message error";
+      const replyText = replyInput.value.trim();
+      if (!replyText) {
+        alert("Reply cannot be empty.");
         return;
       }
 
@@ -114,27 +118,26 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          user_id: replyToUserId,
-          admin_reply: reply
+          user_id: userId,
+          admin_reply: replyText
         })
       })
       .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          msgDiv.textContent = "✅ Reply saved successfully.";
-          msgDiv.className = "message success";
-          document.getElementById("reply").value = "";
+      .then(result => {
+        if (result.success) {
+          statusDiv.textContent = "✅ Reply saved successfully!";
+          existingReply.textContent = "Current Reply: " + replyText;
+          existingReply.style.display = "block";
         } else {
-          msgDiv.textContent = "❌ Failed to save reply.";
-          msgDiv.className = "message error";
+          statusDiv.textContent = "❌ Failed to save reply: " + result.message;
         }
       })
       .catch(err => {
+        statusDiv.textContent = "❌ Error occurred while saving reply.";
         console.error(err);
-        msgDiv.textContent = "❌ Network error.";
-        msgDiv.className = "message error";
       });
     }
   </script>
+
 </body>
 </html>
