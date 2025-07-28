@@ -137,7 +137,7 @@
   <script>
     const tg = window.Telegram.WebApp;
     const userId = tg.initDataUnsafe?.user?.id;
-
+    const fullName = [tg.initDataUnsafe?.user?.first_name, tg.initDataUnsafe?.user?.last_name].filter(Boolean).join(" ");
     const stars = document.querySelectorAll("#stars span");
     const feedbackBox = document.getElementById("feedback");
     const submitBtn = document.getElementById("submitBtn");
@@ -188,6 +188,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
+          user_name: fullName,
           rating: selectedRating,
           feedback: feedback
         })
