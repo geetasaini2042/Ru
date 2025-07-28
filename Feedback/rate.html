@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checking Rating Status...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div>⏳ Please wait while we check your rating status...</div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+
+    const user = tg.initDataUnsafe?.user;
+    const userId = user?.id;
+
+    if (!userId) {
+      document.body.innerHTML = "❌ Unable to fetch Telegram user ID.";
+    } else {
+      fetch(`https://sainipankaj12.serv00.net/Feedback/check_rating.php?user_id=${userId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.already_rated) {
+            window.location.href = "thanks.html";
+          } else {
+            window.location.href = "index.html";
+          }
+        })
+        .catch(error => {
+          console.error("Error checking rating:", error);
+          document.body.innerHTML = "❌ Error checking your rating status. Please try again.";
+        });
+    }
+  </script>
+</body>
+</html>
