@@ -89,19 +89,18 @@
     if (!userId) {
       alert("User ID missing in URL.");
     } else {
-      // Load existing reply
-      fetch(`https://sainipankaj12.serv00.net/Feedback/get_ratings.php`)
+      // ✅ Load existing reply using get_me.php
+      fetch(`https://sainipankaj12.serv00.net/Feedback/get_me.php?user_id=${userId}`)
         .then(res => res.json())
         .then(data => {
-          const entry = data.find(e => e.user_id === userId);
-          if (entry?.admin_reply) {
-            existingReply.textContent = "Current Reply: " + entry.admin_reply;
+          if (data?.admin_reply) {
+            existingReply.textContent = "Current Reply: " + data.admin_reply;
             existingReply.style.display = "block";
-            replyInput.value = entry.admin_reply;
+            replyInput.value = data.admin_reply;
           }
         })
         .catch(err => {
-          console.error("Failed to load existing reply", err);
+          console.error("Failed to load current reply", err);
         });
     }
 
