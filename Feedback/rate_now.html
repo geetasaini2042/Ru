@@ -25,16 +25,13 @@
   <div id="status">⏳ Please wait while we check your rating status...</div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const initData = params.get("initData");
-    const userId = params.get("user_id");
-    const userName = params.get("user_name");
+    const tg = window.Telegram.WebApp;
     const status = document.getElementById("status");
 
     tg.ready();
 
     const waitForUserId = (retry = 10) => {
-
+      const userId = tg.initDataUnsafe?.user?.id;
 
       if (userId) {
         // Call API to check rating
@@ -42,9 +39,9 @@
           .then(res => res.json())
           .then(res => {
             if (res.already_rated) {
-              window.location.href = "Ru/Feedback/thankyou.html";
+              window.location.href = "/Ru/Feedback/thankyou.html";
             } else {
-              window.location.href = "Ru/Feedback/index.html";
+              window.location.href = "/Ru/Feedback/index.html";
             }
           })
           .catch(() => {
