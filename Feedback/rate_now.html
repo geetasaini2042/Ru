@@ -16,18 +16,18 @@
       height: 100vh;
       margin: 0;
       font-size: 18px;
+      text-align: center;
+      padding: 20px;
     }
   </style>
 </head>
 <body>
-  <div>⏳ Please wait while we check your rating status...</div>
+  <div id="status">⏳ Please wait while we check your rating status...</div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    const userId = tg.initDataUnsafe?.user?.id;
-    if (!userId) {
-      document.body.innerHTML = "❌ Unable to fetch Telegram user ID.";
-    } else {
+    const statusDiv = document.getElementById("status");
+
+    function checkRating(userId) {
       fetch(`https://sainipankaj12.serv00.net/Feedback/check_rating.php?user_id=${userId}`)
         .then(response => response.json())
         .then(data => {
@@ -39,9 +39,25 @@
         })
         .catch(error => {
           console.error("Error checking rating:", error);
-          document.body.innerHTML = "❌ Error checking your rating status. Please try again.";
+          statusDiv.textContent = "❌ Error checking your rating. Try again.";
         });
     }
+
+    function waitForUserData(retries = 10) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      const user = tg.initDataUnsafe?.user;
+
+      if (user?.id) {
+        checkRating(user.id);
+      } else if (retries > 0) {
+        setTimeout(() => waitForUserData(retries - 1), 300); // retry after 300ms
+      } else {
+        statusDiv.textContent = "❌ Unable to fetch Telegram user ID. Please open via Telegram.";
+      }
+    }
+
+    waitForUserData();
   </script>
 </body>
 </html>
