@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Feedback Overview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #0f0f0f;
+      color: #fff;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00e676;
+      margin-bottom: 5px;
+    }
+
+    .average-rating {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .stars-outer {
+      display: inline-block;
+      position: relative;
+      font-size: 32px;
+      color: #555;
+    }
+
+    .stars-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      color: #ffc107;
+      width: 0;
+    }
+
+    .rate-button {
+      display: block;
+      margin: 10px auto 30px;
+      padding: 10px 20px;
+      background: #00e676;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .rate-button:hover {
+      background: #00c853;
+    }
+
+    .card-container {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .rating-card {
+      background-color: #1f1f1f;
+      border-left: 4px solid #00e676;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s ease;
+    }
+
+    .rating-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .rating-card h3 {
+      margin: 0 0 5px;
+      font-size: 18px;
+    }
+
+    .stars {
+      font-size: 18px;
+      color: #ffc107;
+    }
+
+    .feedback {
+      margin-top: 10px;
+      font-style: italic;
+      color: #ccc;
+    }
+
+    .admin-reply {
+      margin-top: 12px;
+      background: #2a2a2a;
+      padding: 10px;
+      border-left: 3px solid #2196f3;
+      color: #bbdefb;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .timestamp {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #888;
+      text-align: right;
+    }
+
+    .loading {
+      text-align: center;
+      font-size: 18px;
+      color: #ccc;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 500px) {
+      .rating-card h3 { font-size: 16px; }
+      .stars { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📊 Feedback Dashboard</h1>
+
+  <div class="average-rating">
+    <div class="stars-outer">
+      <div class="stars-inner" id="starsInner">★★★★★</div>
+      ★★★★★
+    </div>
+    <div id="averageText" style="margin-top: 5px; font-size: 14px; color: #aaa;">Calculating average...</div>
+  </div>
+
+  <button class="rate-button" onclick="location.href='rate_now.html'">⭐ Rate Now</button>
+
+  <div id="cardWrapper" class="card-container">
+    <div class="loading" id="loadingText">⏳ Please wait...</div>
+  </div>
+
+  <script>
+    function getStarsHTML(rating) {
+      const max = 5;
+      const filled = "★".repeat(Math.round(rating));
+      const empty = "☆".repeat(max - Math.round(rating));
+      return filled + empty;
+    }
+
+    function setAverageRating(avg) {
+      const starPercentage = (avg / 5) * 100;
+      document.getElementById('starsInner').style.width = `${starPercentage}%`;
+      document.getElementById('averageText').textContent = `Average Rating: ${avg.toFixed(2)} / 5`;
+    }
+
+    fetch("https://sainipankaj12.serv00.net/Feedback/get_ratings.php")
+      .then(response => response.json())
+      .then(data => {
+        const wrapper = document.getElementById("cardWrapper");
+        wrapper.innerHTML = "";
+
+        if (data.length === 0) {
+          wrapper.innerHTML = "<div class='loading'>No feedback found.</div>";
+          return;
+        }
+
+        // Sort by latest timestamp descending
+        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        let total = 0;
+        data.forEach(entry => {
+          const rating = parseFloat(entry.rating);
+          total += rating;
+
+          const userName = entry.user_name?.trim() || "Unknown User";
+          const feedback = entry.feedback?.trim() || "<i>No Message</i>";
+          const adminReply = entry.admin_reply?.trim();
+
+          const card = document.createElement("div");
+          card.className = "rating-card";
+          card.innerHTML = `
+            <h3>${userName}</h3>
+            <div class="stars">${getStarsHTML(rating)}</div>
+            <div class="feedback">${feedback}</div>
+            ${adminReply ? `<div class="admin-reply"><strong>Admin:</strong> ${adminReply}</div>` : ""}
+            <div class="timestamp">${entry.timestamp}</div>
+          `;
+          wrapper.appendChild(card);
+        });
+
+        const average = total / data.length;
+        setAverageRating(average);
+      })
+      .catch(err => {
+        console.error("Error loading ratings:", err);
+        document.getElementById("cardWrapper").innerHTML = `
+          <div class='loading'>❌ Failed to load data.</div>
+        `;
+      });
+  </script>
+
+</body>
+</html>
