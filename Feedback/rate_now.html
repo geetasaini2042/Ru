@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Checking Rating Status...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
-      background: #111;
-      color: #fff;
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
+      background: #111;
+      color: #fff;
       height: 100vh;
-      margin: 0;
       font-size: 18px;
       text-align: center;
-      padding: 20px;
     }
   </style>
 </head>
@@ -25,38 +25,36 @@
   <div id="status">⏳ Please wait while we check your rating status...</div>
 
   <script>
-    const statusDiv = document.getElementById("status");
+    const tg = window.Telegram.WebApp;
+    const status = document.getElementById("status");
 
-    function checkRating(userId) {
-      fetch(`https://sainipankaj12.serv00.net/Feedback/check_rating.php?user_id=${userId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.already_rated) {
-            window.location.href = "thanks.html";
-          } else {
-            window.location.href = "index.html";
-          }
-        })
-        .catch(error => {
-          console.error("Error checking rating:", error);
-          statusDiv.textContent = "❌ Error checking your rating. Try again.";
-        });
-    }
+    tg.ready();
 
-    function waitForUserData(retries = 10) {
-      const tg = window.Telegram.WebApp;
-      const user = tg.initDataUnsafe?.user;
+    const waitForUserId = (retry = 10) => {
+      const userId = tg.initDataUnsafe?.user?.id;
 
-      if (user?.id) {
-        checkRating(user.id);
-      } else if (retries > 0) {
-        setTimeout(() => waitForUserData(retries - 1), 300); // retry after 300ms
+      if (userId) {
+        // Call API to check rating
+        fetch(`https://sainipankaj12.serv00.net/Feedback/check_rating.php?user_id=${userId}`)
+          .then(res => res.json())
+          .then(res => {
+            if (res.already_rated) {
+              window.location.href = "/Ru/Feedback/thankyou.html";
+            } else {
+              window.location.href = "/Ru/Feedback/index.html";
+            }
+          })
+          .catch(() => {
+            status.innerText = "❌ Failed to check your rating status. Please try again.";
+          });
+      } else if (retry > 0) {
+        setTimeout(() => waitForUserId(retry - 1), 300);
       } else {
-        statusDiv.textContent = "❌ Unable to fetch Telegram user ID. Please open via Telegram.";
+        status.innerText = "❌ Unable to fetch Telegram ID. Please open this via Telegram.";
       }
-    }
+    };
 
-    waitForUserData();
+    waitForUserId();
   </script>
 </body>
 </html>
