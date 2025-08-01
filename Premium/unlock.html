@@ -5,112 +5,176 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Unlock File</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src='//libtl.com/sdk.js' data-zone='9504493' data-sdk='show_9504493'></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #00ffcc;
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --blur: blur(16px);
+      --border: rgba(255, 255, 255, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f1f1f1;
-      color: #333;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      max-width: 500px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .title {
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-    .info {
-      margin: 10px 0;
-    }
-    .btn {
-      margin-top: 25px;
-      padding: 12px 20px;
-      font-size: 16px;
-      background-color: #28a745;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    p {
+      text-align: center;
+      opacity: 0.9;
+      margin-bottom: 1.2rem;
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.06);
+      border-radius: 15px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .info-box span {
+      display: block;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: #000;
+      padding: 0.9rem 2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      width: 100%;
       cursor: pointer;
+      transition: 0.3s;
     }
+
+    .btn:hover {
+      background: #02dab0;
+      transform: scale(1.03);
+    }
+
     .btn:disabled {
-      background-color: #999;
-      cursor: not-allowed;
+      opacity: 0.6;
+      pointer-events: none;
     }
-    .hidden {
+
+    .loading {
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--primary);
+      animation: pulse 1s infinite;
       display: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="title">🔓 Unlock File</div>
-    <div class="info"><strong>📄 Name:</strong> <span id="fileName"></span></div>
-    <div class="info"><strong>📝 Description:</strong> <span id="fileDes"></span></div>
-    <div class="info"><strong>📦 Size:</strong> <span id="fileSize"></span></div>
+  <div class="container">
+    <h1>🔓 Unlock File</h1>
+    <p>Watch an ad to access your premium file</p>
 
-    <button id="watchAdBtn" class="btn">▶️ Watch Ad to Unlock</button>
-    <div id="status" class="info hidden">⏳ Verifying...</div>
+    <div class="info-box" id="fileDetails">
+      <span>File:</span> ...
+      <span>Description:</span> ...
+      <span>Size:</span> ...
+    </div>
+
+    <button class="btn" id="watchBtn" onclick="watchAd()">▶️ Watch Ad to Unlock</button>
+    <div class="loading" id="loading">⏳ Unlocking...</div>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const uuid = params.get('uuid');
-    const file_name = params.get('file_name');
-    const file_des = params.get('file_des');
-    const file_size = params.get('file_size');
-    const unlock_url = params.get('url');
+    const tg = window.Telegram.WebApp;
+    const user = tg.initDataUnsafe?.user || {};
+    const userId = user?.id;
 
-    document.getElementById('fileName').innerText = file_name || "N/A";
-    document.getElementById('fileDes').innerText = file_des || "N/A";
-    document.getElementById('fileSize').innerText = file_size || "N/A";
+    const query = new URLSearchParams(window.location.search);
+    const uuid = query.get("uuid");
+    const name = query.get("file_name");
+    const caption = query.get("file_des");
+    const size = query.get("file_size");
+    const baseUrl = query.get("url");
 
-    const watchAdBtn = document.getElementById('watchAdBtn');
-    const statusDiv = document.getElementById('status');
+    // Show file details
+    document.getElementById("fileDetails").innerHTML = `
+      <span>File:</span> ${decodeURIComponent(name || "-")}
+      <span>Description:</span> ${decodeURIComponent(caption || "-")}
+      <span>Size:</span> ${decodeURIComponent(size || "-")}
+    `;
 
-    watchAdBtn.addEventListener('click', () => {
-      // Simulate ad watching (replace with real ad logic if needed)
-      watchAdBtn.disabled = true;
-      watchAdBtn.innerText = "⏳ Watching Ad...";
-      
-      // Simulated ad time (e.g., 7 seconds)
-      setTimeout(() => {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
+    function watchAd() {
+      if (!uuid || !baseUrl || !userId) {
+        alert("❌ Missing required data.");
+        return;
+      }
 
-        const user_id = tg.initDataUnsafe?.user?.id;
-        if (!user_id || !uuid || !unlock_url) {
-          alert("❌ Missing required info.");
-          return;
-        }
+      document.getElementById("watchBtn").disabled = true;
+      document.getElementById("loading").style.display = "block";
 
-        // Show status
-        statusDiv.classList.remove("hidden");
-
-        // Send GET request to unlock_url with user_id and uuid
-        const finalUrl = `${decodeURIComponent(unlock_url)}?user_id=${user_id}&uuid=${uuid}`;
+      show_9504493().then(() => {
+        const finalUrl = `${baseUrl}?uuid=${encodeURIComponent(uuid)}&user_id=${encodeURIComponent(userId)}`;
         fetch(finalUrl)
-          .then(res => {
-            if (res.ok) {
-              statusDiv.innerText = "✅ File Unlocked!";
-              setTimeout(() => {
-                window.location.href = finalUrl;
-              }, 1000);
-            } else {
-              statusDiv.innerText = "❌ Unlock failed.";
-            }
+          .then(() => {
+            alert("✅ File unlocked! Check your Telegram.");
+            tg.close();
           })
-          .catch(() => {
-            statusDiv.innerText = "❌ Network error.";
+          .catch((err) => {
+            alert("❌ Error sending unlock request.");
+            console.error(err);
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("watchBtn").disabled = false;
           });
-
-      }, 7000); // Simulate ad duration (7 seconds)
-    });
+      }).catch(() => {
+        alert("❌ Ad skipped or failed.");
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("watchBtn").disabled = false;
+      });
+    }
   </script>
 </body>
 </html>
