@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unlock File</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    .card {
+      max-width: 500px;
+      margin: auto;
+      padding: 25px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .info {
+      margin: 10px 0;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title">🔓 Unlock File</div>
+    <div class="info"><strong>📄 Name:</strong> <span id="fileName"></span></div>
+    <div class="info"><strong>📝 Description:</strong> <span id="fileDes"></span></div>
+    <div class="info"><strong>📦 Size:</strong> <span id="fileSize"></span></div>
+
+    <a id="unlockBtn" class="btn" href="#">🔗 Unlock Now</a>
+  </div>
+
+  <script>
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        uuid: params.get('uuid'),
+        file_name: params.get('file_name'),
+        file_des: params.get('file_des'),
+        file_size: params.get('file_size'),
+        url: params.get('url')
+      };
+    }
+
+    const { uuid, file_name, file_des, file_size, url } = getQueryParams();
+
+    document.getElementById("fileName").innerText = file_name || "N/A";
+    document.getElementById("fileDes").innerText = file_des || "N/A";
+    document.getElementById("fileSize").innerText = file_size || "N/A";
+
+    const unlockBtn = document.getElementById("unlockBtn");
+    if (url) {
+      unlockBtn.href = url;
+    } else {
+      unlockBtn.innerText = "❌ Invalid URL";
+      unlockBtn.style.backgroundColor = "#888";
+      unlockBtn.removeAttribute("href");
+    }
+  </script>
+</body>
+</html>
