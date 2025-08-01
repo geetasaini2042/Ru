@@ -5,119 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Unlock File</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="//libtl.com/sdk.js" data-zone="9429528" data-sdk="show_9429528"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+      color: #333;
+      padding: 20px;
     }
     .card {
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(14px);
-      padding: 2rem;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-      text-align: center;
+      background: #fff;
+      max-width: 500px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
-    h1 {
-      font-size: 1.6rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 1.5rem;
-      opacity: 0.85;
-    }
-    button {
-      padding: 0.9rem 2rem;
-      background-color: #00ffcc;
-      border: none;
-      border-radius: 50px;
+    .title {
+      font-size: 22px;
       font-weight: bold;
-      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+    .info {
+      margin: 10px 0;
+    }
+    .btn {
+      margin-top: 25px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
     }
-    button:hover {
-      background-color: #00e6b2;
-      transform: scale(1.05);
+    .btn:disabled {
+      background-color: #999;
+      cursor: not-allowed;
     }
-    .details {
-      margin-top: 1.5rem;
-      font-size: 0.9rem;
-      text-align: left;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1rem;
-      border-radius: 10px;
-    }
-    .details span {
-      display: block;
-      margin-bottom: 5px;
-      word-break: break-word;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🔐 Unlock This File</h1>
-    <p>Watch a short ad to get access</p>
-    <button onclick="watchAd()">▶️ Watch Ad</button>
+    <div class="title">🔓 Unlock File</div>
+    <div class="info"><strong>📄 Name:</strong> <span id="fileName"></span></div>
+    <div class="info"><strong>📝 Description:</strong> <span id="fileDes"></span></div>
+    <div class="info"><strong>📦 Size:</strong> <span id="fileSize"></span></div>
 
-    <div class="details" id="detailsBox" style="display:none;">
-      <span><strong>User ID:</strong> <span id="userId">...</span></span>
-      <span><strong>File ID:</strong> <span id="fileId">...</span></span>
-      <span><strong>File Name:</strong> <span id="fileName">...</span></span>
-      <span><strong>File Size:</strong> <span id="fileSize">...</span></span>
-      <span><strong>Unique ID:</strong> <span id="uniqId">...</span></span>
-    </div>
+    <button id="watchAdBtn" class="btn">▶️ Watch Ad to Unlock</button>
+    <div id="status" class="info hidden">⏳ Verifying...</div>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    const userId = tg.initDataUnsafe?.user?.id || 'UNKNOWN';
+    const params = new URLSearchParams(window.location.search);
+    const uuid = params.get('uuid');
+    const file_name = params.get('file_name');
+    const file_des = params.get('file_des');
+    const file_size = params.get('file_size');
+    const unlock_url = params.get('url');
 
-    const query = new URLSearchParams(window.location.search);
-    const file_id = query.get("file_id");
-    const file_name = query.get("file_name");
-    const uniq_id = query.get("uniq_id");
-    const file_size = query.get("file_size");
+    document.getElementById('fileName').innerText = file_name || "N/A";
+    document.getElementById('fileDes').innerText = file_des || "N/A";
+    document.getElementById('fileSize').innerText = file_size || "N/A";
 
-    function watchAd() {
-      show_9429528().then(() => {
-        // Show data box
-        document.getElementById("detailsBox").style.display = "block";
-        document.getElementById("userId").textContent = userId;
-        document.getElementById("fileId").textContent = file_id;
-        document.getElementById("fileName").textContent = file_name;
-        document.getElementById("fileSize").textContent = file_size;
-        document.getElementById("uniqId").textContent = uniq_id;
+    const watchAdBtn = document.getElementById('watchAdBtn');
+    const statusDiv = document.getElementById('status');
 
-        // Send GET request
-        const backendURL = `https://premium-app123.onrender.com/send_file?user_id=${encodeURIComponent(userId)}&file_id=${encodeURIComponent(file_id)}&file_name=${encodeURIComponent(file_name)}&uniq_id=${encodeURIComponent(uniq_id)}&file_size=${encodeURIComponent(file_size)}`;
+    watchAdBtn.addEventListener('click', () => {
+      // Simulate ad watching (replace with real ad logic if needed)
+      watchAdBtn.disabled = true;
+      watchAdBtn.innerText = "⏳ Watching Ad...";
+      
+      // Simulated ad time (e.g., 7 seconds)
+      setTimeout(() => {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
 
-        fetch(backendURL)
+        const user_id = tg.initDataUnsafe?.user?.id;
+        if (!user_id || !uuid || !unlock_url) {
+          alert("❌ Missing required info.");
+          return;
+        }
+
+        // Show status
+        statusDiv.classList.remove("hidden");
+
+        // Send GET request to unlock_url with user_id and uuid
+        const finalUrl = `${decodeURIComponent(unlock_url)}?user_id=${user_id}&uuid=${uuid}`;
+        fetch(finalUrl)
           .then(res => {
-            if (!res.ok) throw new Error("Server error");
-            alert("✅ Request sent! Check Telegram.");
-            tg.close();
+            if (res.ok) {
+              statusDiv.innerText = "✅ File Unlocked!";
+              setTimeout(() => {
+                window.location.href = finalUrl;
+              }, 1000);
+            } else {
+              statusDiv.innerText = "❌ Unlock failed.";
+            }
           })
-          .catch(err => {
-            alert("❌ Error: " + err.message);
+          .catch(() => {
+            statusDiv.innerText = "❌ Network error.";
           });
 
-      }).catch(() => {
-        alert("❌ Ad skipped or failed.");
-      });
-    }
+      }, 7000); // Simulate ad duration (7 seconds)
+    });
   </script>
 </body>
 </html>
