@@ -3,130 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Telegram Mini App with Ad Reward</title>
+  <title>Rewarded Ad Example</title>
+
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- TADS SDK -->
   <script src="https://w.tads.me/widget.js"></script>
+
   <style>
     body {
       font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: var(--tg-theme-bg-color, #ffffff);
-      color: var(--tg-theme-text-color, #000000);
+      padding: 1em;
+      background: #f9f9f9;
+      color: #222;
     }
     button {
-      padding: 12px 20px;
+      padding: 10px 20px;
       font-size: 16px;
+      background: #0088cc;
+      color: #fff;
       border: none;
       border-radius: 8px;
-      background-color: var(--tg-theme-button-color, #2481cc);
-      color: var(--tg-theme-button-text-color, #ffffff);
       cursor: pointer;
     }
-    #debug-log {
+    #logBox {
       margin-top: 20px;
-      font-size: 14px;
-      background: #f0f0f0;
-      color: #000;
       padding: 10px;
-      border-radius: 6px;
-      max-height: 250px;
+      background: #eee;
+      border-radius: 8px;
+      max-height: 200px;
       overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
       white-space: pre-wrap;
-    }
-    #tads-container-614 {
-      display: none;
     }
   </style>
 </head>
 <body>
-  <h2>🎉 Telegram Mini App with Ad Reward</h2>
-  <p id="user-info">Loading user info...</p>
-  <button id="showAdBtn">🔓 Unlock by Watching Ad</button>
-  <div id="tads-container-614"></div>
-  <div id="debug-log">📋 Debug log:</div>
+
+  <h2>🎁 Watch Ad to Unlock</h2>
+  <button id="showAdBtn">Show Rewarded Ad</button>
+
+  <div id="logBox">[📝 Logs will appear here]</div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    const logBox = document.getElementById("logBox");
+    const logDebug = (...args) => {
+      const msg = `[${new Date().toLocaleTimeString()}] ` + args.join(" ");
+      console.log(msg);
+      logBox.innerText += "\n" + msg;
+      logBox.scrollTop = logBox.scrollHeight;
+    };
 
-    const user = tg.initDataUnsafe.user;
-    const userInfoElement = document.getElementById("user-info");
-
-    if (user) {
-      userInfoElement.textContent = `Hello, ${user.first_name} (@${user.username || 'no username'})`;
-    } else {
-      userInfoElement.textContent = "User not detected";
-    }
-
-    const debugLog = document.getElementById("debug-log");
-
-    function logDebug(message, data = null) {
-      const timestamp = new Date().toLocaleTimeString();
-      let output = `[${timestamp}] ${message}`;
-      if (data) {
-        output += `\n${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`;
-      }
-      debugLog.textContent += `\n${output}`;
-      debugLog.scrollTop = debugLog.scrollHeight;
-      console.log(output);
-    }
-
-    function catchGlobalErrors() {
-      window.onerror = function(message, source, lineno, colno, error) {
-        logDebug("🔴 JS Error Caught:", { message, source, lineno, colno, error });
-      };
-      window.onunhandledrejection = function(event) {
-        logDebug("🔴 Unhandled Promise Rejection:", event.reason);
-      };
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      catchGlobalErrors();
+    document.addEventListener("DOMContentLoaded", () => {
+      logDebug("✅ DOM Loaded. Initializing TADS...");
 
       const WIDGET_ID = "614";
       const IS_DEBUG = true;
 
-      logDebug("✅ DOM Loaded. Initializing TADS...");
+      let adController = null;
 
-      if (!window.tads) {
-        logDebug("❌ TADS SDK not loaded. Check widget.js script.");
-        return;
+      try {
+        if (!window.tads) {
+          logDebug("❌ TADS SDK not loaded. Check widget.js script.");
+          return;
+        }
+
+        adController = window.tads.init({
+          widgetId: WIDGET_ID,
+          type: "fullscreen",
+          debug: IS_DEBUG,
+          onShowReward: (result) => {
+            logDebug("✅ Rewarded Ad Shown. Reward user:", JSON.stringify(result));
+          },
+          onAdsNotFound: () => {
+            logDebug("⚠️ No ads available at the moment.");
+          }
+        });
+
+        logDebug("✅ TADS initialized successfully.");
+      } catch (e) {
+        logDebug("❌ Exception during init:", e);
       }
 
-      const onShowRewardCallback = (result) => {
-        alert("🎁 Ad watched. You've unlocked the reward!");
-        logDebug("✅ Reward granted:", result);
-        tg.sendData("reward_granted");
-      };
-
-      const onAdsNotFound = () => {
-        alert("🚫 No ads available currently.");
-        logDebug("⚠️ No ads found.");
-      };
-
-      const adPromise = window.tads.init({
-        widgetId: WIDGET_ID,
-        type: "fullscreen",
-        debug: IS_DEBUG,
-        onShowReward: onShowRewardCallback,
-        onAdsNotFound: onAdsNotFound
-      });
-
       document.getElementById("showAdBtn").addEventListener("click", () => {
-        logDebug("🟡 'Show Ad' button clicked.");
-        adPromise
-          .then(controller => {
-            logDebug("🔵 Calling showAd()...");
-            return controller.showAd();
-          })
-          .catch(err => {
-            alert("❌ Error showing ad. Check debug log.");
-            logDebug("❌ Error in showAd:", err);
-          });
+        if (!adController || typeof adController.showAd !== "function") {
+          logDebug("❌ showAd not available. Check if TADS SDK initialized properly.");
+          alert("Ad controller is not ready.");
+          return;
+        }
+
+        try {
+          logDebug("📡 Calling showAd...");
+          adController.showAd();
+        } catch (err) {
+          logDebug("❌ Error while calling showAd:", err);
+        }
       });
     });
   </script>
+
 </body>
 </html>
