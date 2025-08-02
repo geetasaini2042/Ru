@@ -4,99 +4,72 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rewarded Ad Demo</title>
+  <script src="https://w.tads.me/widget.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      text-align: center;
-      background-color: #f4f4f4;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #111;
+      color: #fff;
     }
-
-    #reward-btn {
-      padding: 15px 30px;
-      font-size: 18px;
-      background-color: #007bff;
+    button {
+      padding: 10px 20px;
+      background-color: #27ae60;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      font-size: 18px;
     }
-
-    #reward-btn:hover {
-      background-color: #0056b3;
-    }
-
-    .log {
-      margin-top: 20px;
-      font-size: 16px;
-      color: #333;
+    button:hover {
+      background-color: #2ecc71;
     }
   </style>
-  <script src="https://w.tads.me/widget.js"></script>
 </head>
 <body>
 
-  <h1>🎁 Watch Ad to Get Reward</h1>
-  <button id="reward-btn">Watch Ad</button>
-  <div class="log" id="log-area"></div>
+  <h2>🎁 Watch Ad & Get Reward</h2>
+  <button id="showAdBtn">Watch Ad</button>
+
+  <!-- Ad Container (still required) -->
+  <div id="tads-container-614"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const WIDGET_ID = "614"; // ✅ Your Widget ID
-      const BTN_ID = "reward-btn";
-      const IS_DEBUG = false;  // Set true for testing, false for production
-
-      const log = (msg) => {
-        const logArea = document.getElementById("log-area");
-        logArea.textContent = msg;
-      };
+      const WIDGET_ID = "614";
+      const IS_DEBUG = false;
+      const btnSelector = "showAdBtn";
 
       const onShowRewardCallback = (result) => {
-        console.log("Ad watched:", result);
-        log("✅ You have earned a reward!");
+        console.log("✅ Ad watched. Reward the user!", result);
+        alert("🎉 Thanks for watching! You've earned your reward.");
       };
 
       const onAdsNotFound = () => {
-        console.log("No ads found");
-        log("⚠️ No ads available at the moment. Please try again later.");
+        console.log("❌ No ads found for user.");
+        alert("No ads available at the moment. Try again later.");
       };
 
-      let adController = null;
+      const adController = window.tads.init({
+        widgetId: WIDGET_ID,
+        type: 'fullscreen',
+        debug: IS_DEBUG,
+        onShowReward: onShowRewardCallback,
+        onAdsNotFound: onAdsNotFound,
+      });
 
-      async function showAd() {
-        try {
-          if (!window.tads || typeof window.tads.init !== "function") {
-            throw new Error("TADS not ready");
-          }
-
-          if (!adController) {
-            adController = window.tads.init({
-              widgetId: WIDGET_ID,
-              type: "fullscreen",
-              debug: IS_DEBUG,
-              onShowReward: onShowRewardCallback,
-              onAdsNotFound: onAdsNotFound,
-            });
-          }
-
-          if (adController && typeof adController.showAd === "function") {
-            await adController.showAd();
-          } else {
-            log("❌ Ad controller not ready");
-          }
-        } catch (err) {
-          console.error(err);
-          log("❌ Failed to load ad. Try again later.");
-        }
-      }
-
-      const btn = document.getElementById(BTN_ID);
-      if (btn) {
-        btn.addEventListener("click", showAd);
-      }
+      document.getElementById(btnSelector).addEventListener("click", () => {
+        adController
+          .then(() => adController.showAd())
+          .catch((err) => {
+            console.error("⚠️ Ad failed to show:", err);
+          });
+      });
     });
   </script>
-
 </body>
 </html>
