@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rewarded Ad Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+
+    #reward-btn {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #reward-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .log {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #333;
+    }
+  </style>
+  <script src="https://w.tads.me/widget.js"></script>
+</head>
+<body>
+
+  <h1>🎁 Watch Ad to Get Reward</h1>
+  <button id="reward-btn">Watch Ad</button>
+  <div class="log" id="log-area"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const WIDGET_ID = "614"; // ✅ Your Widget ID
+      const BTN_ID = "reward-btn";
+      const IS_DEBUG = false;  // Set true for testing, false for production
+
+      const log = (msg) => {
+        const logArea = document.getElementById("log-area");
+        logArea.textContent = msg;
+      };
+
+      const onShowRewardCallback = (result) => {
+        console.log("Ad watched:", result);
+        log("✅ You have earned a reward!");
+      };
+
+      const onAdsNotFound = () => {
+        console.log("No ads found");
+        log("⚠️ No ads available at the moment. Please try again later.");
+      };
+
+      let adController = null;
+
+      async function showAd() {
+        try {
+          if (!window.tads || typeof window.tads.init !== "function") {
+            throw new Error("TADS not ready");
+          }
+
+          if (!adController) {
+            adController = window.tads.init({
+              widgetId: WIDGET_ID,
+              type: "fullscreen",
+              debug: IS_DEBUG,
+              onShowReward: onShowRewardCallback,
+              onAdsNotFound: onAdsNotFound,
+            });
+          }
+
+          if (adController && typeof adController.showAd === "function") {
+            await adController.showAd();
+          } else {
+            log("❌ Ad controller not ready");
+          }
+        } catch (err) {
+          console.error(err);
+          log("❌ Failed to load ad. Try again later.");
+        }
+      }
+
+      const btn = document.getElementById(BTN_ID);
+      if (btn) {
+        btn.addEventListener("click", showAd);
+      }
+    });
+  </script>
+
+</body>
+</html>
