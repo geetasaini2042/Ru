@@ -23,6 +23,17 @@
       color: var(--tg-theme-button-text-color, #ffffff);
       cursor: pointer;
     }
+    #debug-log {
+      margin-top: 20px;
+      font-size: 14px;
+      background: #f0f0f0;
+      color: #000;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
     #tads-container-614 {
       display: none;
     }
@@ -30,10 +41,10 @@
 </head>
 <body>
   <h2>🎉 Telegram Mini App with Ad Reward</h2>
-  <p id="user-info">Loading user...</p>
+  <p id="user-info">Loading user info...</p>
   <button id="showAdBtn">🔓 Unlock by Watching Ad</button>
-
   <div id="tads-container-614"></div>
+  <div id="debug-log">📋 Debug log:</div>
 
   <script>
     const tg = window.Telegram.WebApp;
@@ -49,32 +60,54 @@
       userInfoElement.textContent = "User not detected";
     }
 
+    const debugLog = document.getElementById("debug-log");
+
+    function logDebug(message, data = null) {
+      const timestamp = new Date().toLocaleTimeString();
+      let output = `[${timestamp}] ${message}`;
+      if (data) {
+        output += `\n${JSON.stringify(data, null, 2)}`;
+      }
+      debugLog.textContent += `\n${output}`;
+      debugLog.scrollTop = debugLog.scrollHeight;
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       const WIDGET_ID = "614";
-      const IS_DEBUG = false;
-      const btnIdSelector = "showAdBtn";
+      const IS_DEBUG = true;
 
-      const onShowRewardCallback = () => {
+      logDebug("Initializing TADS widget...");
+
+      const onShowRewardCallback = (result) => {
         alert("🎁 Ad watched. You've unlocked the reward!");
+        logDebug("Reward callback received:", result);
         tg.sendData("reward_granted");
       };
 
       const onAdsNotFound = () => {
-        alert("🚫 No ads available at the moment.");
+        alert("🚫 No ads available currently.");
+        logDebug("No ads found.");
       };
 
       const adPromise = window.tads.init({
         widgetId: WIDGET_ID,
-        type: 'fullscreen',
+        type: "fullscreen",
         debug: IS_DEBUG,
         onShowReward: onShowRewardCallback,
-        onAdsNotFound: onAdsNotFound,
+        onAdsNotFound: onAdsNotFound
       });
 
-      document.getElementById(btnIdSelector).addEventListener("click", () => {
+      document.getElementById("showAdBtn").addEventListener("click", () => {
+        logDebug("Ad button clicked.");
         adPromise
-          .then(controller => controller.showAd())
-          .catch(err => {});
+          .then(controller => {
+            logDebug("Attempting to show ad...");
+            return controller.showAd();
+          })
+          .catch(err => {
+            alert("❌ Error while showing ad. Check debug log.");
+            logDebug("Ad error occurred:", err);
+          });
       });
     });
   </script>
