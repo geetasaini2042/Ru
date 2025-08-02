@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Telegram Mini App with Rewarded Ad</title>
+  <title>Telegram Mini App with Ad Reward</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://w.tads.me/widget.js"></script>
   <style>
@@ -30,7 +30,7 @@
       color: #000;
       padding: 10px;
       border-radius: 6px;
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
       white-space: pre-wrap;
     }
@@ -66,27 +66,44 @@
       const timestamp = new Date().toLocaleTimeString();
       let output = `[${timestamp}] ${message}`;
       if (data) {
-        output += `\n${JSON.stringify(data, null, 2)}`;
+        output += `\n${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`;
       }
       debugLog.textContent += `\n${output}`;
       debugLog.scrollTop = debugLog.scrollHeight;
+      console.log(output);
+    }
+
+    function catchGlobalErrors() {
+      window.onerror = function(message, source, lineno, colno, error) {
+        logDebug("🔴 JS Error Caught:", { message, source, lineno, colno, error });
+      };
+      window.onunhandledrejection = function(event) {
+        logDebug("🔴 Unhandled Promise Rejection:", event.reason);
+      };
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-      const WIDGET_ID = "#614";
+      catchGlobalErrors();
+
+      const WIDGET_ID = "614";
       const IS_DEBUG = true;
 
-      logDebug("Initializing TADS widget...");
+      logDebug("✅ DOM Loaded. Initializing TADS...");
+
+      if (!window.tads) {
+        logDebug("❌ TADS SDK not loaded. Check widget.js script.");
+        return;
+      }
 
       const onShowRewardCallback = (result) => {
         alert("🎁 Ad watched. You've unlocked the reward!");
-        logDebug("Reward callback received:", result);
+        logDebug("✅ Reward granted:", result);
         tg.sendData("reward_granted");
       };
 
       const onAdsNotFound = () => {
         alert("🚫 No ads available currently.");
-        logDebug("No ads found.");
+        logDebug("⚠️ No ads found.");
       };
 
       const adPromise = window.tads.init({
@@ -98,15 +115,15 @@
       });
 
       document.getElementById("showAdBtn").addEventListener("click", () => {
-        logDebug("Ad button clicked.");
+        logDebug("🟡 'Show Ad' button clicked.");
         adPromise
           .then(controller => {
-            logDebug("Attempting to show ad...");
+            logDebug("🔵 Calling showAd()...");
             return controller.showAd();
           })
           .catch(err => {
-            alert("❌ Error while showing ad. Check debug log.");
-            logDebug("Ad error occurred:", err);
+            alert("❌ Error showing ad. Check debug log.");
+            logDebug("❌ Error in showAd:", err);
           });
       });
     });
