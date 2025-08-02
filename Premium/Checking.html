@@ -3,58 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rewarded Ad Demo</title>
+  <title>Telegram Mini App with Rewarded Ad</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://w.tads.me/widget.js"></script>
   <style>
     body {
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #111;
-      color: #fff;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #000000);
     }
     button {
-      padding: 10px 20px;
-      background-color: #27ae60;
-      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
+      background-color: var(--tg-theme-button-color, #2481cc);
+      color: var(--tg-theme-button-text-color, #ffffff);
       cursor: pointer;
-      font-size: 18px;
     }
-    button:hover {
-      background-color: #2ecc71;
+    #tads-container-614 {
+      display: none;
     }
   </style>
 </head>
 <body>
+  <h2>🎉 Telegram Mini App with Ad Reward</h2>
+  <p id="user-info">Loading user...</p>
+  <button id="showAdBtn">🔓 Unlock by Watching Ad</button>
 
-  <h2>🎁 Watch Ad & Get Reward</h2>
-  <button id="showAdBtn">Watch Ad</button>
-
-  <!-- Ad Container (still required) -->
   <div id="tads-container-614"></div>
 
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const user = tg.initDataUnsafe.user;
+    const userInfoElement = document.getElementById("user-info");
+
+    if (user) {
+      userInfoElement.textContent = `Hello, ${user.first_name} (@${user.username || 'no username'})`;
+    } else {
+      userInfoElement.textContent = "User not detected";
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       const WIDGET_ID = "614";
       const IS_DEBUG = false;
-      const btnSelector = "showAdBtn";
+      const btnIdSelector = "showAdBtn";
 
-      const onShowRewardCallback = (result) => {
-        console.log("✅ Ad watched. Reward the user!", result);
-        alert("🎉 Thanks for watching! You've earned your reward.");
+      const onShowRewardCallback = () => {
+        alert("🎁 Ad watched. You've unlocked the reward!");
+        tg.sendData("reward_granted");
       };
 
       const onAdsNotFound = () => {
-        console.log("❌ No ads found for user.");
-        alert("No ads available at the moment. Try again later.");
+        alert("🚫 No ads available at the moment.");
       };
 
-      const adController = window.tads.init({
+      const adPromise = window.tads.init({
         widgetId: WIDGET_ID,
         type: 'fullscreen',
         debug: IS_DEBUG,
@@ -62,12 +71,10 @@
         onAdsNotFound: onAdsNotFound,
       });
 
-      document.getElementById(btnSelector).addEventListener("click", () => {
-        adController
-          .then(() => adController.showAd())
-          .catch((err) => {
-            console.error("⚠️ Ad failed to show:", err);
-          });
+      document.getElementById(btnIdSelector).addEventListener("click", () => {
+        adPromise
+          .then(controller => controller.showAd())
+          .catch(err => {});
       });
     });
   </script>
