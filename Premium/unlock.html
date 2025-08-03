@@ -8,55 +8,125 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- libtl SDK -->
+  <!-- libtl SDKs -->
   <script src="//libtl.com/sdk.js" data-zone="9504493" data-sdk="show_9504493"></script>
+  <script src="//libtl.com/sdk.js" data-zone="9661203" data-sdk="show_9661203"></script>
 
   <!-- tads SDK -->
   <script src="https://w.tads.me/widget.js"></script>
 
+  <!-- Fonts & Style -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* same style as before */
     :root {
       --primary: #00ffcc;
       --glass-bg: rgba(255, 255, 255, 0.08);
       --blur: blur(16px);
       --border: rgba(255, 255, 255, 0.2);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: white; display: flex; justify-content: center;
-      align-items: center; padding: 2rem 1rem; min-height: 100vh;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+      min-height: 100vh;
     }
+
     .container {
-      width: 100%; max-width: 420px;
-      background: var(--glass-bg); backdrop-filter: var(--blur);
-      border: 1px solid var(--border); border-radius: 20px;
-      padding: 2rem; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 420px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.8s ease;
     }
-    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; text-align: center; }
-    p { text-align: center; opacity: 0.9; margin-bottom: 1.2rem; }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    p {
+      text-align: center;
+      opacity: 0.9;
+      margin-bottom: 1.2rem;
+    }
+
     .info-box {
-      background: rgba(255,255,255,0.06); border-radius: 15px;
-      padding: 1rem; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6;
+      background: rgba(255,255,255,0.06);
+      border-radius: 15px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
     }
-    .info-box span { display: block; font-weight: 600; color: var(--primary); }
+
+    .info-box span {
+      display: block;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
     .btn {
-      background: var(--primary); color: #000;
-      padding: 0.9rem 2rem; border: none; border-radius: 50px;
-      font-size: 1rem; font-weight: 600; width: 100%;
-      cursor: pointer; transition: 0.3s;
+      background: var(--primary);
+      color: #000;
+      padding: 0.9rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    .btn:hover { background: #02dab0; transform: scale(1.03); }
-    .btn:disabled { opacity: 0.6; pointer-events: none; }
+
+    .btn:hover {
+      background: #02dab0;
+      transform: scale(1.03);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
     .loading {
-      text-align: center; margin-top: 1rem;
-      color: var(--primary); animation: pulse 1s infinite; display: none;
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--primary);
+      animation: pulse 1s infinite;
+      display: none;
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .ad-type {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #00ffc8b9;
     }
   </style>
 </head>
@@ -64,13 +134,16 @@
   <div class="container">
     <h1>🔓 Unlock File</h1>
     <p>Watch an ad to access your premium file</p>
+
     <div class="info-box" id="fileDetails">
       <span>File:</span> ...
       <span>Description:</span> ...
       <span>Size:</span> ...
     </div>
+
     <button class="btn" id="watchBtn" onclick="watchAd()">▶️ Watch Ad to Unlock</button>
     <div class="loading" id="loading">⏳ Unlocking...</div>
+    <div class="ad-type" id="adInfoText">Ad: --</div>
   </div>
 
   <script>
@@ -92,80 +165,76 @@
       <span>Size:</span> ${decodeURIComponent(size || "-")}
     `;
 
-    function unlockFile() {
-      const finalUrl = `${baseUrl}?uuid=${encodeURIComponent(uuid)}&user_id=${encodeURIComponent(userId)}`;
-      fetch(finalUrl)
-        .then(() => {
-          alert("✅ File unlocked! Check your Telegram.");
-          tg.close();
-        })
-        .catch((err) => {
-          alert("❌ Error sending unlock request.");
-          console.error(err);
+    // Three ad providers
+    const adFunctions = [
+      () => {
+        document.getElementById("adInfoText").innerText = "Ad: libtl (Zone 9504493)";
+        return show_9504493();
+      },
+      () => {
+        document.getElementById("adInfoText").innerText = "Ad: libtl (Zone 9661203)";
+        return show_9661203();
+      },
+      () => {
+        document.getElementById("adInfoText").innerText = "Ad: TADS (Widget ID 614)";
+        return new Promise((resolve, reject) => {
+          const controller = window.tads?.init({
+            widgetId: "614",
+            type: "fullscreen",
+            debug: false,
+            onShowReward: resolve,
+            onAdsNotFound: reject
+          });
+
+          if (controller?.showAd) {
+            controller.showAd().catch(reject);
+          } else {
+            reject("❌ TADS showAd not ready");
+          }
         });
+      }
+    ];
+
+    function getNextAdIndex() {
+      const last = parseInt(localStorage.getItem("last_ad_index") || "-1", 10);
+      const next = (last + 1) % adFunctions.length;
+      localStorage.setItem("last_ad_index", next.toString());
+      return next;
     }
 
-    async function watchAd() {
+    function watchAd() {
       if (!uuid || !baseUrl || !userId) {
         alert("❌ Missing required data.");
         return;
       }
 
+      const adIndex = getNextAdIndex();
+      const adFn = adFunctions[adIndex];
+
       document.getElementById("watchBtn").disabled = true;
       document.getElementById("loading").style.display = "block";
 
-      const lastAd = localStorage.getItem("lastAdProvider") || "tads";
-      let primary = lastAd === "tads" ? "libtl" : "tads";
-      let fallback = lastAd === "tads" ? "tads" : "libtl";
-
-      try {
-        await showAd(primary);
-        localStorage.setItem("lastAdProvider", primary);
-        unlockFile();
-      } catch (err1) {
-        console.warn(`⚠️ ${primary} failed. Trying ${fallback}`);
-        try {
-          await showAd(fallback);
-          localStorage.setItem("lastAdProvider", fallback);
-          unlockFile();
-        } catch (err2) {
-          alert("❌ No ad could be shown. Please try again later.");
-          console.error("Both ads failed:", err1, err2);
+      adFn()
+        .then(() => {
+          const finalUrl = `${baseUrl}?uuid=${encodeURIComponent(uuid)}&user_id=${encodeURIComponent(userId)}`;
+          fetch(finalUrl)
+            .then(() => {
+              alert("✅ File unlocked! Check your Telegram.");
+              tg.close();
+            })
+            .catch((err) => {
+              alert("❌ Error sending unlock request.");
+              console.error(err);
+              document.getElementById("loading").style.display = "none";
+              document.getElementById("watchBtn").disabled = false;
+            });
+        })
+        .catch((err) => {
+          alert("❌ Ad failed or skipped.");
+          console.error(err);
           document.getElementById("loading").style.display = "none";
           document.getElementById("watchBtn").disabled = false;
-        }
-      }
-    }
-
-    function showAd(provider) {
-      return new Promise((resolve, reject) => {
-        if (provider === "libtl") {
-          if (typeof show_9504493 !== "function") return reject("libtl SDK not loaded.");
-          show_9504493().then(resolve).catch(reject);
-        } else if (provider === "tads") {
-          if (!window.tads || typeof window.tads.init !== "function") {
-            return reject("TADS SDK not loaded.");
-          }
-          const adCtrl = window.tads.init({
-            widgetId: "614",
-            type: "fullscreen",
-            debug: true,
-            onShowReward: (res) => {
-              console.log("🎉 TADS Rewarded:", res);
-              resolve(res);
-            },
-            onAdsNotFound: () => {
-              console.log("🚫 No TADS ads found.");
-              reject("TADS: no ads.");
-            }
-          });
-          setTimeout(() => {
-            adCtrl.showAd().catch((err) => reject(err));
-          }, 100); // slight delay
-        } else {
-          reject("Unknown provider");
-        }
-      });
+        });
     }
   </script>
 </body>
