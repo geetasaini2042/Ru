@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📁 Rajasthan File Manager</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 10px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    .item {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+    .item:hover {
+      background: #e9f0ff;
+    }
+    .back-button {
+      background: #eee;
+      padding: 8px;
+      margin-bottom: 10px;
+      display: inline-block;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2 id="title">📂 Loading...</h2>
+  <div id="back" class="back-button" style="display:none;" onclick="goBack()">⬅️ पीछे जाएं</div>
+  <div id="content"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    let fullData = {};
+    let currentFolder = null;
+    let pathStack = [];
+
+    async function fetchData() {
+      const res = await fetch("https://botbuilder-6861.onrender.com/get-file/bot_data.json");
+      const json = await res.json();
+      fullData = json.data;
+      openFolder(fullData); // Start from root
+    }
+
+    function openFolder(folder) {
+      currentFolder = folder;
+      document.getElementById("title").innerText = "📁 " + (folder.name || "Root");
+
+      const content = document.getElementById("content");
+      content.innerHTML = "";
+
+      folder.items?.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        if (item.type === "folder") {
+          div.innerHTML = "📁 " + item.name;
+          div.onclick = () => {
+            pathStack.push(currentFolder);
+            openFolder(item);
+            document.getElementById("back").style.display = "inline-block";
+          };
+        } else if (item.type === "url") {
+          div.innerHTML = "🔗 " + (item.name || "URL");
+          div.onclick = () => window.open(item.url, "_blank");
+        } else if (item.type === "file") {
+          div.innerHTML = "📄 " + (item.name || "Document");
+          div.onclick = () => {
+            const fileUrl = `https://t.me/share/file?file_id=${item.file_id}`;
+            window.open(fileUrl, "_blank");
+          };
+        } else {
+          div.innerHTML = "📦 " + item.name;
+        }
+
+        content.appendChild(div);
+      });
+    }
+
+    function goBack() {
+      if (pathStack.length > 0) {
+        const prev = pathStack.pop();
+        openFolder(prev);
+      }
+
+      if (pathStack.length === 0) {
+        document.getElementById("back").style.display = "none";
+      }
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
