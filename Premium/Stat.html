@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tads Demo</title>
+  <!-- सबसे पहले SDK -->
+  <script src="https://w.tads.me/widget.js"></script>
+</head>
+<body>
+  <h2>Rewarded Ad Demo (Widget 679)</h2>
+
+  <!-- जहाँ ad दिखाना है वहाँ div लगाना जरूरी है -->
+  <div id="tads-container-679"></div>
+
+  <button id="showAdBtn">Show Ad</button>
+
+  <script>
+    const adsNotFoundCallback = () => {
+      console.log('❌ No ads found to show');
+      alert("इस समय कोई ad उपलब्ध नहीं है।");
+    };
+
+    // यूज़र ad पर क्लिक करे
+    const onClickRewardCallback = (adId) => {
+      console.log('✅ Clicked ad:', adId);
+      alert("आपको reward मिल गया!");
+    };
+
+    // Ad Controller बनाओ
+    const adController = window.tads.init({
+      widgetId: 679,
+      type: 'static',   // 'fullscreen' भी कर सकते हो
+      debug: true,      // Production में false रखना
+      onClickReward: onClickRewardCallback,
+      onAdsNotFound: adsNotFoundCallback
+    });
+
+    // Button दबाने पर Ad load + show करो
+    document.getElementById("showAdBtn").addEventListener("click", () => {
+      adController.loadAd()
+        .then(() => adController.showAd())
+        .catch((err) => {
+          console.error(err);
+          adsNotFoundCallback();
+        });
+    });
+  </script>
+</body>
+</html>
